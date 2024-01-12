@@ -1,70 +1,79 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import Pagination from '@mui/material/Pagination';
-import JobsDataJson from '../jobs.json';
-import { Box, Container, ListItem, Stack } from '@mui/material';
+import { Box, Button, CircularProgress, Container, ListItem, Stack, TablePagination } from '@mui/material';
+import axios from 'axios';
+import { BACKEND_URL } from "../config/config"
+import { useNavigate } from 'react-router-dom';
+const JobList = ({ title, location }) => {
+  const navigate=useNavigate()
+  const [loading, setLoading] = useState(false)
+  const [data, setData] = useState({ jobs: [], totalCount: 0 });
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const loadJobs = async () => {
+    setLoading(true)
+    try {
+      const resp = await axios.get(`${BACKEND_URL}/api/getJobs`, {
+        params: { title, location, page, limit: rowsPerPage },
+      })
+      setData(resp.data)
+    } catch (err) {
+      console.error(err)
+    }
+    setLoading(false)
+  }
+  useEffect(() => {
+    loadJobs()
 
-const JobList = () => {
-  const [data, setData] = useState({
-    jobsList: JobsDataJson.collection,
-    totalCount: 2
-  });
-  const itemsPerPage = 6; // Number of items to display per page
-  const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Function to handle page change
-  const handlePageChange = (event, value) => {
-    // setIsLoading(true);
-    // setPage(value);
-  };
-
+  }, [title, location, rowsPerPage, page])
+  const handleChangePage = () => {
+    setPage(page + 1)
+  }
+  const handleChangeRowsPerPage = (value) => {
+    setRowsPerPage(value)
+  }
+  const handleJobClick = (item) => {
+    navigate(`/job/${item._id}`, { state: { jobData: item } });
+    
+  }
   return (
-    <Stack>
+    <Stack sx={{ marginTop: '10px' }}>
       {
-        data.jobsList.map((item, index) => (
-          <Container sx={{ border: "1px solid red" }}>
-            <Typography><strong>Job Title:</strong> {item['job_title']} </Typography>
-            <Typography> <strong>Company:</strong> {item['company']} </Typography>
-          </Container>
-        ))
+        loading ? <CircularProgress /> :
+          <>
+            <Typography sx={{ alignSelf: 'flex-end' }}>Total Jobs {data.totalCount}</Typography>
+            {
+              data.jobs.map((item, index) => (
+                <Container sx={{ border: '1px solid #eee', borderRadius: 1, marginTop: '10px', padding: "10px 0px",cursor:'pointer' }} key={{ index }} onClick={() => handleJobClick(item)}>
+                  <Box sx={{ display: "flex", flexDirection: 'col', justifyContent: 'space-between' }}>
+                    <Typography sx={{ fontWeight: 'bold' }}>{item.title}</Typography>
+                    <Typography>{item.location}</Typography>
+                  </Box>
+                  <Typography>{item.company}</Typography>
+                  <Typography variant="body1">
+                    {item.description}
+                  </Typography>
+                </Container>
+              ))
+            }
+            {
+              data.totalCount > 0 &&
+              <TablePagination
+                component="div"
+                count={data.totalCount}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={(event) => handleChangeRowsPerPage(event.target.value)}
+                sx={{ margin: "10px 0px", alignSelf: 'center' }}
+              />
+            }
+          </>
       }
     </Stack>
-    // <div style={{ marginTop: '20px' }}>
-    // <Grid container spacing={2}>
-    // {isLoading ? (
-    // <Grid item xs={12}>
-    // <p>Loading...</p>
-    // </Grid>
-    // ) : (
-    // <>
-    // {data.jobsList.length > 0 ? (
-    // data.jobsList.map((item, index) => (
-    // <Stack direction="row">
-    // <ListItem style={{ border: '1px solid #ccc' }}>
-    // <strong>Job Title:</strong> {item['job_title']} <br />
-    // <strong>Company:</strong> {item['company']}
-    // </ListItem>
-    // </Stack>
-    // ))
-    // ) : (
-    // <Grid item xs={12}>
-    // <Typography>No Data</Typography>
-    // </Grid>
-    // )}
-    // <Grid item xs={12}>
-    // <Pagination
-    // count={Math.ceil(data.jobsList.length / itemsPerPage)}
-    // page={page}
-    // onChange={handlePageChange}
-    // color="primary"
-    // />
-    // </Grid>
-    // </>
-    // )}
-    // </Grid>
-    // </div>
+
   );
 };
 
