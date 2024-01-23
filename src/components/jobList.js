@@ -25,7 +25,7 @@ const JobList = ({ title, location }) => {
     setLoading(false)
   }
   useEffect(() => {
-    loadJobs()
+    // loadJobs()
 
   }, [title, location, rowsPerPage, page])
   const handleChangePage = () => {
