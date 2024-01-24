@@ -18,5 +18,4 @@ const SearchComponent = ({ iconName, placeholder, additionalText,value,setter })
     </Container>
   );
 };
-
 export default SearchComponent;
